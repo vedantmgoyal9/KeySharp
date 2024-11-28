@@ -1,0 +1,29 @@
+name: Update compiled libraries
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - native/
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4.1.0
+      - run: cmake --build native
+      - if: matrix.os == 'windows-latest'
+        run: cp native/skeychain.dll KeySharp/runtimes/win-x64/native/skeychain.dll
+      - if: matrix.os == 'macos-latest'
+        run: cp native/libskeychain.dylib KeySharp/runtimes/osx-arm64/native/libskeychain.dylib
+      - if: matrix.os == 'ubuntu-latest'
+        run: cp native/libskeychain.so KeySharp/runtimes/linux-x64/native/libskeychain.so
+      - run: git add KeySharp/runtimes
+      - run: git config --global user.name "github-actions[bot]"
+      - run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - run: git commit -m "Update compiled libraries"
+      - run: git push
